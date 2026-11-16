@@ -1,7 +1,8 @@
 # Install
 
 Three ways in, easiest first. All of them end with the same image:
-`release/openwrt-bcm53xx-generic-netgear_r7000-squashfs.chk`.
+`release/openwrt-bcm53xx-generic-netgear_r7000-squashfs.chk`. Verify it first:
+`cd release && sha256sum -c SHA256SUMS`.
 
 > The default LAN is **192.168.1.28/24** and the DHCP server is **off**. Your
 > computer will not get a lease from this router — set a static address in

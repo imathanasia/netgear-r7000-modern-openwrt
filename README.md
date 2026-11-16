@@ -56,7 +56,8 @@ soft-float needs on this CPU and are installed by hand; see
 
 ### From the stock Netgear firmware
 
-1. Download `release/openwrt-bcm53xx-generic-netgear_r7000-squashfs.chk`.
+1. Download `release/openwrt-bcm53xx-generic-netgear_r7000-squashfs.chk` and verify it:
+   `cd release && sha256sum -c SHA256SUMS`.
 2. Netgear UI → *Advanced → Administration → Firmware Update* → upload the
    `.chk`. Do not power off during the write.
 3. The router comes up at **192.168.1.28** (not .1), SSH `root` / `changeme`.
