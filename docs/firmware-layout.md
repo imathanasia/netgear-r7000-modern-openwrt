@@ -21,10 +21,11 @@ ubi0: 973 LEBs × 124 KiB = 117.8 MiB   (3 bad PEBs)
 └── rootfs_data 800 LEBs  96.8 MiB   ubifs → mounted at /overlay (87.6 MiB usable)
 ```
 
-There is **no second flash volume and no `/mnt/flash`**. The vendor firmware
-carves the end of the NAND into a small `board_data` area that OpenWrt used to
-leave read-only and unused; this image makes the whole remaining UBI available
-to one `rootfs_data` volume instead.
+There is **no second flash volume and no `/mnt/flash`**. On a stock unit the
+vendor flash still carries `board_data`/`POT`/`ML` magics and `bcm47xxpart`
+marks those partitions read-only; the patch below makes the region writable so
+the first-boot UBI setup can format it, after which the remaining space is one
+`rootfs_data` volume.
 
 The arithmetic matters:
 
@@ -37,14 +38,19 @@ The arithmetic matters:
 
 ## Why the ML partition is writable
 
-`bcm47xxpart` normally forces the "ML" (manufacturer/data) area read-only, which
-prevents UBI from attaching to the full container. The patch in
-`patches/0001-mtd-bcm47xxpart-make-ML-writable.patch` clears the read-only mask
-for `board_data`, `POT` and `ML`, so the parser can present one contiguous UBI
-device. Bootloader, factory and T_Meter areas stay read-only.
+On a stock R7000 the flash still contains the vendor `board_data`, `POT` and
+`ML` magics. `bcm47xxpart` marks those partitions read-only
+(`mask_flags = MTD_WRITEABLE`), so the first-boot UBI setup cannot erase or
+format the large `ML` region (`ubiformat` fails with `EROFS`) and the writable
+area stays limited to the vendor-sized `firmware` partition.
 
-After the first boot with the new layout, the parser renames/resizes partitions
-on the next mtd write; the table above is the resulting state.
+`patches/0001-mtd-bcm47xxpart-make-ML-writable.patch` clears the read-only mask
+for `board_data`, `POT` and `ML`; bootloader, factory and T_Meter areas stay
+read-only. Once the image has been written, those vendor magics are gone:
+`bcm47xxpart` then finds only `boot`, `nvram` and `firmware`, and the `mtdsplit`
+TRX parser splits `firmware` into `linux` plus the 122 MiB `ubi` partition — the
+state in the table above, verified in `dmesg` on the reference unit
+(`3 bcm47xxpart partitions found`, `0x000000400000-0x000007e00000 : "ubi"`).
 
 ## sysupgrade behaviour
 
@@ -58,7 +64,8 @@ updater and OpenWrt's platform check both accept it.
 
 ## Stock firmware
 
-The stock R7000 firmware uses the same `firmware` partition but a different
-internal split (a vendor TRX plus its own UBI volumes). Flashing a full stock
-`.trx` over the 62 MB region overruns the partition and panics — always use a
-`.chk` built for this layout, or the stock recovery procedure.
+The stock R7000 firmware keeps its own partition table and its own UBI volumes.
+Use Netgear's recovery procedure (CFE TFTP or the vendor updater) with a vendor
+`.chk` to go back; do not push a vendor `.trx` through OpenWrt's `sysupgrade`,
+which validates the OpenWrt/UBI layout. CFE and nvram are untouched by this
+image either way.

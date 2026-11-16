@@ -1,111 +1,122 @@
-# Netgear R7000 — Modern OpenWrt
+<p align="center"><img src="images/logo-netgear-r7000.svg" alt="Netgear R7000 running OpenWrt" width="900"></p>
 
-OpenWrt for the Netgear R7000 (BCM4709A0 + 2 × BCM4360) with the out-of-tree
-**b43-next AC-PHY** driver, the full 122 MB NAND UBI reclaimed for a single
-~87 MB overlay, and a small homelab application set. A ready-to-flash
-`-squashfs.chk` is included.
+# Netgear R7000 — a 2013 router running a 2026 homelab stack
+
+**Project and packaging: [@ImAthanasia](https://github.com/ImAthanasia).**
+**Start here: [what this router can do now](docs/use-cases.md) — the feature list and the real-world scenarios.**
+
+<p>
+<img src="images/badges/openwrt.svg" alt="OpenWrt 25.12"> <img src="images/badges/kernel.svg" alt="kernel 6.18">
+<img src="images/badges/soc.svg" alt="BCM4709A0"> <img src="images/badges/wifi.svg" alt="2x BCM4360 AC-PHY">
+<img src="images/badges/ram.svg" alt="256 MB"> <img src="images/badges/flash.svg" alt="128 MB NAND">
+</p>
+
+This is a 1 GHz Cortex-A9 with 256 MB of RAM and 128 MB of NAND — the box that shipped with
+Linux 2.6 and a web UI you stopped trusting years ago. On this image it is a DNS-level ad blocker
+for the whole house, a zero-port remote-access node, a VPN server, a traffic shaper, a SMB3 file
+server and a per-device traffic accountant — with an open-source **b43-next AC-PHY** driver for
+both BCM4360 radios and a project page inside LuCI that shows what the box is doing.
+
+Nothing here is emulated or "demo": every number on the page is read from the unit through ubus,
+and every package was built for it.
+
+<p align="center"><img src="images/collage.png" alt="Screenshots from the running unit" width="980"></p>
+
+## Bring a dead R7000 back to life
+
+Netgear stopped shipping firmware for this model years ago, and the last stock build runs a
+2.6 kernel with no security fixes. Half the NAND is wasted by the vendor layout, and the Wi-Fi
+driver is a closed Broadcom blob. The hardware is still fine — three gigabit ports, USB 3.0,
+256 MB of RAM.
+
+This build is the full recovery path:
+
+- **CFE TFTP netboot** from a RAM-only image, so a bad flash or a dead web UI does not brick the
+  box; no serial console needed ([install method B](docs/install.md)).
+- **One 122 MB UBI volume** instead of the vendor leftovers, giving ~87 MB of `/overlay` — enough
+  for AdGuard filters, logs and extra packages.
+- **b43-next** replaces `wl` entirely: both radios work on the open driver, no proprietary
+  userspace.
+- **Radios off by default**, root password set, LAN on `192.168.1.28` — the box boots quiet and
+  secure instead of broadcasting a default SSID.
+
+Back up `mtd0` (CFE) and `mtd1` (nvram) before your first flash; the TFTP initramfs and serial
+recovery steps are in [docs/recovery.md](docs/recovery.md).
+
+## What this image gives you
+
+- **Ad blocking for every device** — AdGuard Home on port 53 with DoH upstream and per-client
+  stats (soft-float build linked in [docs/services.md](docs/services.md)).
+- **Remote access without ports** — Tailscale (off until it has a node key) and kernel WireGuard.
+- **Calls stay smooth** — SQM/cake shaping on the uplink.
+- **Storage** — ksmbd SMB3 shares, aria2 downloads onto a hot-plugged disk, smartmontools.
+- **Visibility** — nlbwmon per device, vnstat2 monthly totals.
+- **Peripherals** — USB 3.0 storage and tethering helpers are in the image.
+- **Guard rails** — banip blocklists, watchcat ping watchdog, Wi-Fi schedule, DDNS.
+- **Wi-Fi on demand** — `wifi-radio on|off|status`; at boot nothing is transmitted.
+- **A real project page** — *Services → ★ Router project*: radio state, hardware, service
+  states, recovery steps, quick start and a Wi-Fi QR when a radio is on.
+- **Branding you can see** — version string, DTS model and a footer badge on every LuCI page.
+
+Not included (by design — licence/size): AdGuard Home and Tailscale binaries. Both have
+soft-float needs on this CPU and are installed by hand; see [docs/services.md](docs/services.md).
+
+## Use cases
+
+| Scenario | What runs |
+|---|---|
+| **Resurrect a bricked or abandoned unit** | CFE TFTP initramfs → `sysupgrade -n`; stock firmware is not needed |
+| **Block ads on every phone, TV and laptop** | AdGuard Home on :53, DoH upstream, dnsmasq moved to port 0 |
+| **Reach home from anywhere** | Tailscale subnet router, or WireGuard in-kernel |
+| **Turn a USB disk into a share / download box** | ksmbd SMB3 + aria2 + smartmontools (ext4/exfat/ntfs3 modules included) |
+| **Keep video calls smooth on a busy line** | SQM with cake, per-direction shaping |
+| **See who is eating the uplink** | nlbwmon per device, vnstat2 monthly totals |
+| **Secure the box and forget it** | banip blocklists, watchcat ping watchdog, Wi-Fi schedule, DDNS |
+
+The long version with before/after and exact commands is in
+[docs/use-cases.md](docs/use-cases.md).
+
+## Hardware
+
+Read from `ubus`, `dmesg`, `/proc/mtd` and `iwinfo` on the running box.
 
 | | |
 |---|---|
-| SoC | Broadcom BCM4709A0 (Cortex-A9, no VFP) |
-| Radios | 2 × BCM4360, 3×3 (2.4 GHz + 5 GHz) |
-| Wi-Fi driver | `b43-next` (AC-PHY, DFS), not vendor `wl` |
-| Kernel | Linux 6.18.60 |
-| Base | OpenWrt 25.12 / `b43-ac-phy` @ `25058cf7` |
-| Flash | 122 MB UBI → 96.8 MB `rootfs_data` → 87.6 MB `/overlay` |
-| Default LAN | `192.168.1.28/24`, DHCP server off |
+| SoC | Broadcom **BCM4709A0**, ARMv7 Cortex-A9, 2 cores @ 1 GHz, **no VFP** |
+| RAM | 256 MB DDR3 |
+| Flash | 128 MB NAND, UBI over the full region: 122 MB → 96.8 MB `rootfs_data` → 87.6 MB `/overlay` |
+| Wi-Fi | **2 × BCM4360** (3×3, 2.4 GHz + 5 GHz), d11 rev 42, AC-PHY rev 1 |
+| Ethernet | 4 × GbE LAN + 1 × GbE WAN (BCM53010 switch in the SoC) |
+| USB | 1 × USB 3.0 (xHCI) + 1 × USB 2.0 |
+| Kernel | Linux 6.18.60, `b43-next` (no `wl`, no Broadcom userspace) |
+| Default LAN | `192.168.1.28/24`, DHCP server **off** |
 | Default login | `root` / `changeme` |
 
-<p align="center"><img src="images/router-page.png" alt="Built-in Router project page" width="900"></p>
-
-> **Before you connect it to anything:** change the root password, change the
-> Wi-Fi key in `/etc/router-wifi.conf`, and set your own country. The image
-> ships with a placeholder key and the radios **off**.
-
-## Why this exists
-
-Netgear's stock firmware leaves the second half of the NAND unused and ships a
-closed `wl` driver. This build:
-
-- reclaims the whole 122 MB UBI area — one `rootfs_data` volume, no second
-  partition, no `/mnt/flash` tricks;
-- runs the open `b43-next` driver with AC-PHY support on both BCM4360 radios
-  (VHT80 on 5 GHz, DFS channels);
-- keeps radios **off** until you ask for them (`wifi-radio on`);
-- provides a built-in **Router project** page in LuCI (status, storage, CFE
-  notes, service hints) and matching screenshots;
-- is unmodified OpenWrt underneath: `opkg`, firewall, DHCP, SQM, VPNs and the
-  rest work as usual.
-
-## What you get
-
-- LuCI 25.12 with the Material and Bootstrap themes.
-- `b43-next` kernel module + firmware squashed to the AC core rev (42).
-- Extra tools: `iwinfo`, `ethtool`, `htop`, `socat`, `lm-sensors`, `tcpdump`,
-  `mtr`, `nmap`, `aria2`, `ksmbd`, `wsdd2`, `nlbwmon`, `vnstat2`, `banip`,
-  `ttyd`, `sqm-scripts`, `wifischedule`, `watchcat`, `wol`, `ddns-scripts`.
-- The **Router project** LuCI page at *Services → ★ Router project*, also
-  reachable at `/router.html`.
-- A footer badge on every LuCI page.
-
-Not included (by design — licence/size): AdGuard Home and Tailscale. Both have
-soft-float needs on this CPU and are installed by hand; see
-[docs/services.md](docs/services.md).
+> **Before you connect it to anything:** change the root password, change the Wi-Fi key in
+> `/etc/router-wifi.conf`, and set your own country. The image ships with a placeholder key and
+> the radios **off**.
 
 ## Install
 
-### From the stock Netgear firmware
-
-1. Download `release/openwrt-bcm53xx-generic-netgear_r7000-squashfs.chk` and verify it:
-   `cd release && sha256sum -c SHA256SUMS`.
-2. Netgear UI → *Advanced → Administration → Firmware Update* → upload the
-   `.chk`. Do not power off during the write.
-3. The router comes up at **192.168.1.28** (not .1), SSH `root` / `changeme`.
-
-If the stock uploader rejects the file or stalls, use the CFE/TFTP route in
-[docs/install.md](docs/install.md). The image carries the Netgear board id
-`U12H270T00_NETGEAR`, so its own updater accepts it as a valid `.chk`.
-
-### From OpenWrt (including this image)
+Get the images from the [v1.0.0 release](https://github.com/ImAthanasia/netgear-r7000-modern-openwrt/releases/tag/v1.0.0)
+(`…-squashfs.chk` to flash, `…-initramfs.trx` for CFE netboot) and verify them:
 
 ```sh
-scp openwrt-bcm53xx-generic-netgear_r7000-squashfs.chk root@192.168.1.28:/tmp/
-ssh root@192.168.1.28
-sysupgrade -n /tmp/openwrt-bcm53xx-generic-netgear_r7000-squashfs.chk
+cd release && sha256sum -c SHA256SUMS
 ```
 
-`-n` wipes the overlay and gives you the documented first-boot state.
+| Route | When |
+|---|---|
+| **B — CFE TFTP netboot** | bricked box, first flash, no serial |
+| **A — vendor updater** | stock Netgear firmware still working |
+| **C — `sysupgrade -n`** | already on OpenWrt |
 
-## First boot
-
-```sh
-ssh root@192.168.1.28          # password: changeme
-passwd                          # do this first
-
-vi /etc/router-wifi.conf        # SSID, KEY, COUNTRY, channels
-wifi-radio on                   # radios are off by default
-wifi-radio status
-```
-
-Dual-band APs come up as `<SSID>-2G` (HT20) and `<SSID>-5G` (VHT80/DFS).
-The service stays enabled across reboots once you run `wifi-radio on`.
-
-## Repository layout
-
-```
-config/       full .config and the minimal diffconfig used for this image
-docs/         install, recovery, layout, Wi-Fi, services, build, limits
-images/       screenshots of this exact build
-overlay/      files/ overlay (board-neutral; see overlay/README.md)
-package/      package/kernel/b43-next (pinned upstream)
-patches/      bcm53xx patches, R7000 image Makefile change, LuCI badge
-release/      flashable .chk, package manifest, SHA256SUMS
-```
+Full commands and the recovery procedures: [docs/install.md](docs/install.md) and
+[docs/recovery.md](docs/recovery.md).
 
 ## Build it yourself
 
-Short version (full details, host packages and pitfalls in
-[docs/build.md](docs/build.md)):
+Short version (full details, host packages and pitfalls in [docs/build.md](docs/build.md)):
 
 ```sh
 git clone https://git.openwrt.org/openwrt/openwrt.git
@@ -131,10 +142,10 @@ The result lands in
 
 ## Documentation
 
-- [Install](docs/install.md) — stock firmware, web UI, CFE/TFTP, sysupgrade.
-- [Recovery](docs/recovery.md) — serial, TFTP initramfs, backups.
-- [Firmware layout](docs/firmware-layout.md) — partitions, UBI, why the ML
-  partition is writable.
+- [Use cases](docs/use-cases.md) — scenarios, before/after, exact commands.
+- [Install](docs/install.md) — CFE/TFTP, vendor updater, sysupgrade.
+- [Recovery](docs/recovery.md) — serial, TFTP initramfs, backups, back to stock.
+- [Firmware layout](docs/firmware-layout.md) — partitions, UBI, why ML is writable.
 - [Wi-Fi](docs/wifi.md) — b43-next, channels, DFS, `wifi-radio`.
 - [Services](docs/services.md) — AdGuard Home, Tailscale, file sharing, DNS.
 - [Build](docs/build.md) — exact toolchain and patch order.
@@ -157,5 +168,5 @@ The result lands in
 
 ## License
 
-Project glue (overlay scripts, docs, page): MIT — see [LICENSE](LICENSE).
+Project glue (overlay scripts, docs, page, banner): MIT — see [LICENSE](LICENSE).
 The firmware image aggregates GPL-2.0 and other code; see [NOTICE](NOTICE).
