@@ -115,7 +115,13 @@ return view.extend({
 				'<p>AdGuard Home and Tailscale live in <code>/opt</code> on that overlay; no separate volume needed.</p></div>');
 			html.push('<div class="c"><h3>Recovery &amp; updates</h3>' +
 				'<p>CFE <code>boot_wait=on</code>; back up <code>mtd0</code> (CFE) and <code>mtd1</code> (nvram) before your first flash. Serial 115200 8N1 + TFTP initramfs recovers a bad flash.</p>' +
-				'<p>Updates: <code>sysupgrade -n image.chk</code>; from stock, the web updater needs <code>Expect:</code> stripped.</p></div>');
+				'<p>Updates: <code>sysupgrade -n image.chk</code>. From stock firmware, use the vendor updater or the CFE/TFTP route in <code>docs/install.md</code>.</p></div>');
+			html.push('<div class="c"><h3>Project docs</h3>' +
+				'<p><a href="https://github.com/ImAthanasia/netgear-r7000-modern-openwrt#readme" target="_blank" rel="noopener">README</a> · ' +
+				'<a href="https://github.com/ImAthanasia/netgear-r7000-modern-openwrt/blob/main/docs/install.md" target="_blank" rel="noopener">install</a> · ' +
+				'<a href="https://github.com/ImAthanasia/netgear-r7000-modern-openwrt/blob/main/docs/recovery.md" target="_blank" rel="noopener">recovery</a> · ' +
+				'<a href="https://github.com/ImAthanasia/netgear-r7000-modern-openwrt/blob/main/docs/use-cases.md" target="_blank" rel="noopener">use cases</a> · ' +
+				'<a href="https://github.com/ImAthanasia/netgear-r7000-modern-openwrt/blob/main/docs/services.md" target="_blank" rel="noopener">services</a></p></div>');
 		} else {
 			html.push('<div class="c"><h3>Hardware</h3>' +
 				'<p>BCM47094 + 2× BCM4360 (d11 rev 42, AC-PHY rev 1, radio 0x2069 rev 4).</p>' +

@@ -98,7 +98,7 @@ Read from `ubus`, `dmesg`, `/proc/mtd` and `iwinfo` on the running box.
 
 ## Install
 
-Get the images from the [v1.0.0 release](https://github.com/ImAthanasia/netgear-r7000-modern-openwrt/releases/tag/v1.0.0)
+Get the images from the [v1.0.1 release](https://github.com/ImAthanasia/netgear-r7000-modern-openwrt/releases/tag/v1.0.1)
 (`…-squashfs.chk` to flash, `…-initramfs.trx` for CFE netboot) and verify them:
 
 ```sh

@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.0.1 — 2026-11-16
+
+Router page and release refresh; same firmware base as 1.0.0.
+
+- Removed the unverified claim that the stock updater needs `Expect:` stripped; the recovery
+  card now points at `docs/install.md`.
+- Added a **Project docs** card to the router page (README, install, recovery, use cases,
+  services).
+- Rebuilt and re-verified on hardware: `.chk` `eccad30d…`, `-initramfs.trx` `b5532d34…`;
+  page audit reports the badge present, no other-board branding, no MAC text, gates off.
+- README/asset refresh from the same build: hero, badges, collage, social preview.
+
 ## 1.0.0 — 2026-11-16
 
 Initial public release for the Netgear R7000.
