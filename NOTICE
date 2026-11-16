@@ -1,0 +1,49 @@
+NOTICE — third-party components
+
+The firmware image in release/ is assembled from OpenWrt and its package feeds.
+The project glue in this repository is MIT (see LICENSE); the image as a whole
+is not, and each component keeps its own licence and copyright.
+
+Base system
+-----------
+OpenWrt (https://openwrt.org) — GPL-2.0 (individual packages under their own
+licences). Corresponding source is the pinned tree and configuration in this
+repository:
+  base commit 25058cf725f1994e5d5b4f012d321ecec5ef413d
+  config/config.r7000, config/diffconfig.r7000, patches/, overlay/, package/
+
+LuCI — Apache-2.0 (some modules under their own licences), plus the footer
+badge patch in patches/0003-luci-footer-badge.patch.
+
+Linux kernel 6.18.60 — GPL-2.0-only.
+
+Wi-Fi
+-----
+b43 / b43-next — GPL-2.0-only
+  https://github.com/aleferri/b43-next
+  commit ee7ed443dc8dde43bd2b2e9aea7d170ad5e92e1b
+  AC-PHY patches from the OpenWrt b43-ac-phy branch.
+
+Broadcom wireless firmware 6.30.163.46 (784.2), redistributed in the
+linux-firmware package under Broadcom's firmware licence; squashed to core
+revision 42 / AC by the b43-next package. The firmware is redistributable but
+not open source.
+
+Not included in the image
+-------------------------
+AdGuard Home — GPL-3.0 (https://github.com/AdguardTeam/AdGuardHome)
+Tailscale   — BSD-3-Clause (https://github.com/tailscale/tailscale)
+
+Both are installed by the user from their upstream releases; see
+docs/services.md. Their binaries are not part of this repository.
+
+Tools used for the reference build and validation
+-------------------------------------------------
+OpenWrt buildroot, GNU binutils, squashfs-tools, UBI tools, Playwright/
+Chromium (screenshots only; no page content is copied beyond the rendered
+screenshots of the GPL/Apache LuCI and GPL AdGuard interfaces).
+
+Trademarks
+----------
+NETGEAR and R7000 are trademarks of their owners. This project is not
+affiliated with or endorsed by NETGEAR.

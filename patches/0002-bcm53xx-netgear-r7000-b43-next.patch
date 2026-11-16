@@ -1,0 +1,11 @@
+--- a/target/linux/bcm53xx/image/Makefile
++++ b/target/linux/bcm53xx/image/Makefile
+@@ -536,7 +536,7 @@
+ 
+ define Device/netgear_r7000
+   DEVICE_MODEL := R7000
+-  DEVICE_PACKAGES := $(USB3_PACKAGES)
++  DEVICE_PACKAGES := $(USB3_PACKAGES) kmod-b43-next
+   $(Device/netgear)
+   NETGEAR_BOARD_ID := U12H270T00_NETGEAR
+ endef
